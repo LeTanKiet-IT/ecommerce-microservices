@@ -1,0 +1,59 @@
+
+name: Ecommerce Microservices CI
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-services:
+    name: Validate ${{ matrix.service }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - api-gateway
+          - auth-service
+          - customer-service
+          - product-service
+          - order-service
+          - shipment-service
+
+    defaults:
+      run:
+        working-directory: apps/${{ matrix.service }}
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/${{ matrix.service }}/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check JavaScript syntax
+        run: |
+          find . -path './node_modules' -prune -o \
+            -type f -name '*.js' -print0 |
+            xargs -0 -r -n 1 node --check
+
+      - name: Build Docker image
+        run: docker build -t ecommerce-${{ matrix.service }}:ci .
