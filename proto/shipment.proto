@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package ecommerce.shipment.v1;
+
+// Contract proposal only: current Shipment Service exposes REST and consumes Kafka events.
+service ShipmentService {
+  rpc GetShipmentByOrder(GetShipmentByOrderRequest) returns (Shipment);
+}
+
+message GetShipmentByOrderRequest {
+  int64 order_id = 1;
+}
+
+message Shipment {
+  int64 shipment_id = 1;
+  int64 order_id = 2;
+  string status = 3;
+  int64 total_amount_vnd = 4;
+}
+
+// Conceptual event schema; Kafka currently uses its existing message format.
+// Adding this message does not change Kafka serialization to Protobuf.
+message OrderCreatedEvent {
+  int64 order_id = 1;
+  int64 customer_auth_user_id = 2;
+  int64 total_amount_vnd = 3;
+}
