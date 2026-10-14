@@ -16,6 +16,9 @@ permissions:
   contents: read
 
 jobs:
+  # ============================================
+  # JOB 1: VALIDATE ALL MICROSERVICES
+  # ============================================
   validate-services:
     name: Validate ${{ matrix.service }}
     runs-on: ubuntu-latest
@@ -57,3 +60,58 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t ecommerce-${{ matrix.service }}:ci .
+
+  # ============================================
+  # JOB 2: ORDER SERVICE UNIT TESTS
+  # ============================================
+  order-unit-tests:
+    name: Order Service Unit Tests
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: apps/order-service
+
+    # Gia tri gia lap cho Unit Test.
+    # Khong su dung mat khau Database that.
+    env:
+      ORDER_DB_NAME: ci_test_db
+      ORDER_DB_USER: ci_test_user
+      ORDER_DB_PASSWORD: ci_test_password
+      ORDER_DB_PORT: "5432"
+      ORDER_DB_HOST: 127.0.0.1
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/order-service/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Order Service Unit Tests
+        shell: bash
+        run: |
+          set -e
+
+          for test_file in \
+            request-hash.test.js \
+            place-order-idempotency.mock.test.js \
+            place-order-lifecycle.mock.test.js \
+            recover-order-request.mock.test.js \
+            recover-order.mock.test.js \
+            reserve-timeout.mock.test.js
+          do
+            echo "===== Running $test_file ====="
+            node --test "$test_file"
+          done
+
+      - name: Unit Test Summary
+        if: success()
+        run: echo "All Order Service Unit Tests PASSED"
