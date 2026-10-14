@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package ecommerce.order.v1;
+
+// Contract proposal only: current Order Service exposes REST, not gRPC.
+// Money fields use integer VND units for illustration.
+service OrderService {
+  rpc CreateOrder(CreateOrderRequest) returns (Order);
+  rpc GetOrder(GetOrderRequest) returns (Order);
+}
+
+message OrderItemRequest {
+  string product_id = 1;
+  int64 quantity = 2;
+}
+
+message CreateOrderRequest {
+  int64 customer_auth_user_id = 1;
+  string idempotency_key = 2;
+  repeated OrderItemRequest items = 3;
+}
+
+message OrderItem {
+  string product_id = 1;
+  string product_sku = 2;
+  string product_name = 3;
+  int64 unit_price_vnd = 4;
+  int64 quantity = 5;
+  int64 line_total_vnd = 6;
+}
+
+message Order {
+  int64 order_id = 1;
+  int64 customer_auth_user_id = 2;
+  string status = 3;
+  int64 subtotal_vnd = 4;
+  double discount_percent = 5;
+  int64 discount_amount_vnd = 6;
+  int64 total_amount_vnd = 7;
+  repeated OrderItem items = 8;
+}
+
+message GetOrderRequest {
+  int64 order_id = 1;
+}
