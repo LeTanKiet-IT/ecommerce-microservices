@@ -1,0 +1,25 @@
+
+services:
+  api-gateway:
+    image: letankiet/ecommerce-api-gateway:latest
+
+  auth-service:
+    image: letankiet/ecommerce-auth-service:latest
+
+  customer-service:
+    image: letankiet/ecommerce-customer-service:latest
+
+  product-service:
+    image: letankiet/ecommerce-product-service:latest
+
+  order-service:
+    image: letankiet/ecommerce-order-service:latest
+
+  shipment-service:
+    image: letankiet/ecommerce-shipment-service:latest
+
+  order-outbox-publisher:
+    image: letankiet/ecommerce-order-service:latest
+
+  shipment-consumer:
+    image: letankiet/ecommerce-shipment-service:latest
