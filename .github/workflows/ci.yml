@@ -72,8 +72,7 @@ jobs:
       run:
         working-directory: apps/order-service
 
-    # Gia tri gia lap cho Unit Test.
-    # Khong su dung mat khau Database that.
+    # Gia tri gia lap, khong su dung DB production
     env:
       ORDER_DB_NAME: ci_test_db
       ORDER_DB_USER: ci_test_user
@@ -115,3 +114,104 @@ jobs:
       - name: Unit Test Summary
         if: success()
         run: echo "All Order Service Unit Tests PASSED"
+
+  # ============================================
+  # JOB 3: PRODUCT SERVICE INTEGRATION TESTS
+  # ============================================
+  product-integration-tests:
+    name: Product Service Integration Tests
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: apps/product-service
+
+    # MongoDB rieng trong GitHub Actions
+    env:
+      PRODUCT_MONGO_URL: mongodb://127.0.0.1:27017/product_ci?replicaSet=rs0&directConnection=true
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/product-service/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start MongoDB Replica Set
+        run: |
+          docker run -d \
+            --name mongo-ci \
+            -p 127.0.0.1:27017:27017 \
+            mongo:7 \
+            mongod --replSet rs0 --bind_ip_all
+
+      - name: Initialize MongoDB Replica Set
+        shell: bash
+        run: |
+          set -e
+
+          ready=0
+
+          for i in $(seq 1 30); do
+            if docker exec mongo-ci mongosh --quiet \
+              --eval 'db.adminCommand({ping:1})' \
+              > /dev/null 2>&1; then
+              ready=1
+              break
+            fi
+
+            sleep 2
+          done
+
+          if [ "$ready" -ne 1 ]; then
+            echo "MongoDB did not start"
+            exit 1
+          fi
+
+          docker exec mongo-ci mongosh --quiet \
+            --eval 'rs.initiate({_id:"rs0",members:[{_id:0,host:"localhost:27017"}]})'
+
+          for i in $(seq 1 30); do
+            if docker exec mongo-ci mongosh --quiet \
+              --eval 'quit(db.hello().isWritablePrimary ? 0 : 1)' \
+              > /dev/null 2>&1; then
+              echo "MongoDB Replica Set is ready"
+              exit 0
+            fi
+
+            sleep 2
+          done
+
+          echo "MongoDB Replica Set initialization failed"
+          exit 1
+
+      - name: Run Product Service Integration Tests
+        shell: bash
+        run: |
+          set -e
+
+          for test_file in \
+            stock.test.js \
+            reservation.test.js \
+            confirm.test.js \
+            release.test.js \
+            reservation-list.test.js
+          do
+            echo "===== Running $test_file ====="
+            node "$test_file"
+          done
+
+      - name: Show MongoDB logs on failure
+        if: failure()
+        run: docker logs --tail 100 mongo-ci
+
+      - name: Stop MongoDB test container
+        if: always()
+        run: docker rm -f mongo-ci || true
