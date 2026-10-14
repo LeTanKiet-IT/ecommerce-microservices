@@ -1,0 +1,41 @@
+
+# Dependencies
+node_modules/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Backups and database dumps
+backups/
+*.archive
+*.dump
+*.bak
+
+# Old source code backups
+*.backup.js
+*.before-*.js
+*.broken.js
+
+# Old Docker Compose configurations
+infra/compose.backup.yaml
+infra/compose.before-*.yaml
+
+# Local IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.swp

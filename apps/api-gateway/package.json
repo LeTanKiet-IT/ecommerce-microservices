@@ -1,0 +1,26 @@
+{
+  "name": "@ecommerce/api-gateway",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node --env-file=../../.env --watch src/server.js",
+    "start": "node --env-file=../../.env src/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "private": "true",
+  "dependencies": {
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.1",
+    "helmet": "^8.3.0",
+    "http-proxy-middleware": "^4.2.0",
+    "jsonwebtoken": "^9.0.3",
+    "morgan": "^1.12.1",
+    "rate-limit-redis": "^6.0.1",
+    "redis": "^6.3.0"
+  }
+}
